@@ -37,6 +37,58 @@ Notebook: 02_web_search_tools.ipynb
 class: neb-slide
 ---
 
+<div class="deck-kicker">Setup</div>
+<h1>Sign up for Tavily — free API key in two minutes</h1>
+
+<div class="signup-grid">
+  <article class="signup-card">
+    <div class="signup-meta"><span>01</span> Open</div>
+    <div class="signup-shot">
+      <img src="/screenshots/tavily-01-homepage.jpg" alt="Tavily homepage — Try it for free" />
+    </div>
+    <strong>Go to tavily.com</strong>
+    <p>Click <span class="lime-text">Try it for free</span>.</p>
+  </article>
+
+  <article class="signup-card">
+    <div class="signup-meta"><span>02</span> Sign up</div>
+    <div class="signup-shot">
+      <img src="/screenshots/tavily-02-signup.jpg" alt="Tavily create account screen" />
+    </div>
+    <strong>Create an account</strong>
+    <p>Email, or continue with Google / GitHub.</p>
+  </article>
+
+  <article class="signup-card">
+    <div class="signup-meta"><span>03</span> Copy key</div>
+    <div class="signup-shot signup-key-panel">
+      <div class="key-mock">
+        <div class="key-mock-head">Dashboard · API Keys</div>
+        <div class="key-mock-row">
+          <code>tvly-••••••••••••••••</code>
+          <span class="key-mock-copy">Copy</span>
+        </div>
+        <div class="key-mock-env">
+          <div class="key-mock-file">lesson/.env</div>
+          <pre>TAVILY_API_KEY=tvly-...</pre>
+        </div>
+      </div>
+    </div>
+    <strong>Paste into <code>.env</code></strong>
+    <p>1,000 free credits / month — no credit card.</p>
+  </article>
+</div>
+
+<CourseTakeaway text="Put TAVILY_API_KEY in lesson/.env before you run the notebook. Keys always start with tvly-." />
+
+<!--
+Walk the room through signup live if wifi allows. Free tier is enough for the whole notebook.
+-->
+
+---
+class: neb-slide
+---
+
 <div class="deck-kicker">Why tools?</div>
 
 <div class="hero-statement">
@@ -149,8 +201,8 @@ data = response.json()
 
 <div class="api-stack">
   <CodeAsideItem label="Endpoint"><strong>POST</strong> /search</CodeAsideItem>
-  <CodeAsideItem label="Send" value="query · depth · recency · limit" />
-  <CodeAsideItem label="Receive" value="title · url · content · score" />
+  <CodeAsideItem label="Send" value="query + additional runtime parameters" />
+  <CodeAsideItem label="Receive" value="Scored results with URLs and snippets" />
   <CodeAsideItem label="Next"><strong>POST</strong> /extract on chosen URLs</CodeAsideItem>
 </div>
 
@@ -173,7 +225,7 @@ class: neb-slide
 <div class="result-shell">
   <div class="result-card">
     <span class="score">0.94</span>
-    <div class="pill">RESULT 01</div>
+    <div class="pill">01 RESULT</div>
     <h2>Lab ships new open model for agentic workflows</h2>
     <div class="url">https://news.example.com/ai/model-release</div>
     <p>A query-focused snippet — navigation, ads, and page chrome already stripped — so the model can skim evidence without ingesting the whole page.</p>
@@ -429,46 +481,6 @@ def run_agent(question: str, max_steps: int = 10):
 
 
 <!--
-Notebook: final implementation (sections 5, cells 24–26). Walk: model call → stop check → execute → append.
--->
-
----
-class: neb-slide
----
-
-<div class="deck-kicker">Observability</div>
-<h1>Every run should leave a trace</h1>
-
-<div class="trace-line">
-  <div class="trace-event" v-click>
-    <div class="num">01 · SEARCH</div>
-    <h3>Cast a net</h3>
-    <p><span class="mono">query:</span><br>“AI advancements this week”</p>
-  </div>
-  <div class="trace-arrow" v-click>→</div>
-  <div class="trace-event" v-click>
-    <div class="num">02 · SEARCH</div>
-    <h3>Narrow the focus</h3>
-    <p><span class="mono">query:</span><br>“new AI model releases July 2026”</p>
-  </div>
-  <div class="trace-arrow" v-click>→</div>
-  <div class="trace-event" v-click>
-    <div class="num">03 · EXTRACT</div>
-    <h3>Read the best pages</h3>
-    <p><span class="mono">urls:</span><br>two strongest primary sources</p>
-  </div>
-  <div class="trace-arrow" v-click>→</div>
-  <div class="trace-event final" v-click>
-    <div class="num">04 · ANSWER</div>
-    <h3>Cite every claim</h3>
-    <p>Grounded synthesis with a URL on each factual statement.</p>
-  </div>
-</div>
-
-<CourseTakeaway v-click text="A stored trace shows tool choice, arguments, evidence, and why the loop stopped — after the run is over." />
-
-
-<!--
 Show ToolTracer.events and ToolTracer.show() in the notebook. Tracing is how you debug tool choice.
 -->
 
@@ -502,9 +514,6 @@ class: neb-slide
   </div>
 </div>
 
-<CourseTakeaway text="Next module: query planning, deduplication, source filtering, and summarization." />
-
-
 <!--
 These gaps motivate the search pipeline — not failures of tool calling, but missing orchestration.
 -->
@@ -523,10 +532,6 @@ layout: course-summary
   <SummaryItem number="03" label="Schema" detail="Expose the tool" />
   <SummaryItem number="04" label="Loop" detail="Call until done" />
 </div>
-
-::footer::
-
-NEXT · BUILDING A SEARCH PIPELINE
 
 <!--
 Close on the transferable idea: an agent is a model inside an application-controlled loop; tools supply fresh evidence.
