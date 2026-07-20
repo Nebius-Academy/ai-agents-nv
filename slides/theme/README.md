@@ -55,8 +55,8 @@ layout: course-summary
 <p>One-sentence recap.</p>
 
 <div class="recap-row">
-  <SummaryItem number="01" label="Plan" />
-  <SummaryItem number="02" label="Search" />
+  <SummaryItem number="01" label="Plan" detail="Decompose the question" />
+  <SummaryItem number="02" label="Search" detail="Discover sources" />
 </div>
 
 ::footer::

@@ -2,12 +2,14 @@
 defineProps<{
   number: string
   label: string
+  detail?: string
 }>()
 </script>
 
 <template>
   <div class="recap">
     <span>{{ number }}</span>
-    {{ label }}
+    <strong>{{ label }}</strong>
+    <em v-if="detail">{{ detail }}</em>
   </div>
 </template>

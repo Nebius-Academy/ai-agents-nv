@@ -15,8 +15,8 @@ layout: course-cover
 ---
 
 <div class="deck-kicker">AI Agents · Module 02</div>
-<h1>Web search tools<br>and a first <span>agent loop</span></h1>
-<p>Using Tavily and plain Python to give an LLM access to current, citable information.</p>
+<h1>Give an LLM the web<br>with a first <span>agent loop</span></h1>
+<p>Tavily retrieves current sources. Token Factory runs the model. Plain Python decides when to call each tool.</p>
 
 ::provider::
 
@@ -28,7 +28,7 @@ layout: course-cover
 </div>
 
 <!--
-Open with the outcome rather than setup details: by the end, we will have a small research agent that searches, reads, and cites fresh sources.
+Open with the outcome: by the end, a small research agent that searches, reads, and cites fresh sources.
 
 Notebook: 02_web_search_tools.ipynb
 -->
@@ -45,23 +45,23 @@ class: neb-slide
 <CompareCard
   number="LLM"
   eyebrow="Model knowledge"
-  title="Useful, but bounded in time"
-  :items="['Strong reasoning and language skills', 'Knowledge ends at training time', 'Answers about recent events may be stale']"
+  title="Strong reasoning, frozen facts"
+  :items="['Excellent language and reasoning', 'Cutoff ends at training time', 'Recent events can be guessed or stale']"
 />
 <CompareCard
   number="WEB"
-  eyebrow="External information"
-  title="Current and sourceable"
+  eyebrow="External evidence"
+  title="Current, citable, checkable"
   variant="lime"
-  :items="['News, releases, prices, and documentation', 'Evidence from identifiable sources', 'Fresh context for the model to reason over']"
+  :items="['News, docs, releases, and prices', 'URLs you can verify and cite', 'Fresh context the model can reason over']"
 />
 </div>
-<CourseTakeaway text="For questions about what is happening now, the model needs a way to retrieve external evidence." />
+<CourseTakeaway text="For anything that changes after training, the model needs a retrieval tool — not a longer prompt." />
 </div>
 
 
 <!--
-Use a current question as the hook: “What were the biggest AI advancements this week?” A base model cannot know this reliably without external information.
+Hook with a current question: “What were the biggest AI advancements this week?” A base model cannot answer that reliably without the web.
 -->
 
 ---
@@ -69,14 +69,14 @@ class: neb-slide
 ---
 
 <div class="deck-kicker">Tavily primitives</div>
-<h1>Search and Extract serve different purposes</h1>
+<h1>Search finds sources. Extract reads them.</h1>
 
 <div class="grid-2">
   <CompareCard
     number="01"
     eyebrow="Discover"
     title="Search"
-    description="Start with a question. Get ranked pages with titles, URLs, relevant snippets, and relevance scores."
+    description="Ask a question. Get ranked pages — title, URL, query-relevant snippet, and a relevance score."
     badge="QUERY → SOURCES"
     variant="light"
   />
@@ -84,17 +84,17 @@ class: neb-slide
     number="02"
     eyebrow="Read"
     title="Extract"
-    description="Start with one or more URLs. Get the full cleaned page content as markdown or text."
+    description="Pass one or more URLs. Get the cleaned full page as markdown or text, ready for deeper reading."
     badge="URLS → CONTENT"
     variant="lime"
   />
 </div>
 
-<CourseTakeaway text="Use Search to discover candidate sources; use Extract when the snippets do not provide enough detail." />
+<CourseTakeaway text="Search first to shortlist. Extract only when the snippet is not enough to support a claim." />
 
 
 <!--
-Search is source discovery. Extract is source reading. Search snippets are often enough for quick answers; extraction matters when details, caveats, or exact claims live deeper in the page.
+Search = source discovery. Extract = source reading. Snippets often suffice; extract when details or caveats live deeper in the page.
 -->
 
 ---
@@ -102,25 +102,25 @@ class: neb-slide
 ---
 
 <div class="deck-kicker">The research pattern</div>
-<h1>A simple research workflow</h1>
+<h1>Five decisions every research agent makes</h1>
 
 <div class="flow-row">
-  <ProcessStep v-click number="01" label="Question" title="Define" description="What information must be current and verifiable?" />
+  <ProcessStep v-click number="01" label="Question" title="Frame" description="What must be current and verifiable?" />
   <div class="flow-arrow" v-click>→</div>
-  <ProcessStep v-click number="02" label="Search" title="Discover" description="Find a broad set of potentially useful sources." />
+  <ProcessStep v-click number="02" label="Search" title="Discover" description="Cast a wide net for useful sources." />
   <div class="flow-arrow" v-click>→</div>
-  <ProcessStep v-click number="03" label="Rank" title="Shortlist" description="Keep the strongest and most relevant pages." />
+  <ProcessStep v-click number="03" label="Rank" title="Shortlist" description="Keep the strongest, most relevant pages." />
   <div class="flow-arrow" v-click>→</div>
-  <ProcessStep v-click number="04" label="Extract" title="Read" description="Pull full content only where snippets are insufficient." />
+  <ProcessStep v-click number="04" label="Extract" title="Read" description="Fetch full pages only when needed." />
   <div class="flow-arrow" v-click>→</div>
-  <ProcessStep v-click number="05" label="Answer" title="Synthesize" description="Reason over evidence and cite every factual claim." />
+  <ProcessStep v-click number="05" label="Answer" title="Cite" description="Synthesize from evidence; cite every claim." />
 </div>
 
-<CourseTakeaway v-click text="Our agent will decide when to repeat the middle of this sequence." />
+<CourseTakeaway v-click text="The agent decides when to search again, when to extract, and when it has enough to answer." />
 
 
 <!--
-Reveal the pipeline one stage at a time. The important conceptual move is that search and extraction are separate decisions.
+Reveal one stage at a time. Search and extract are separate decisions — that is the key conceptual move.
 -->
 
 ---
@@ -128,42 +128,39 @@ class: neb-slide
 ---
 
 <div class="deck-kicker">No framework required</div>
-<h1>Underneath, each tool is an HTTP request</h1>
+<h1>Underneath, every tool is an HTTP call</h1>
 
 <div class="split-code">
 
 ```python
 response = requests.post(
     "https://api.tavily.com/search",
-    headers={
-        "Authorization": f"Bearer {TAVILY_API_KEY}"
-    },
+    headers={"Authorization": f"Bearer {TAVILY_API_KEY}"},
     json={
-        "query": "advancements in AI this week",
+        "query": "AI advancements this week",
         "search_depth": "advanced",
         "max_results": 5,
         "time_range": "week",
     },
     timeout=30,
 )
-
 data = response.json()
 ```
 
 <div class="api-stack">
   <CodeAsideItem label="Endpoint"><strong>POST</strong> /search</CodeAsideItem>
-  <CodeAsideItem label="Input" value="query · depth · recency · limit" />
-  <CodeAsideItem label="Output" value="title · url · content · score" />
-  <CodeAsideItem label="Then"><strong>POST</strong> /extract for selected URLs</CodeAsideItem>
+  <CodeAsideItem label="Send" value="query · depth · recency · limit" />
+  <CodeAsideItem label="Receive" value="title · url · content · score" />
+  <CodeAsideItem label="Next"><strong>POST</strong> /extract on chosen URLs</CodeAsideItem>
 </div>
 
 </div>
 
-<CourseTakeaway text="Client libraries reduce boilerplate. They do not change the mental model." />
+<CourseTakeaway text="SDKs cut boilerplate. They do not change the mental model: request in, structured evidence out." />
 
 
 <!--
-Notebook handoff: run the raw HTTP Search and Extract cells (sections 1, cells 5–12). Point out the Authorization header, JSON body, and response fields. API key setup should happen before recording or in a short aside.
+Notebook: raw HTTP Search and Extract cells (sections 1, cells 5–12). Point at Authorization, JSON body, and response fields.
 -->
 
 ---
@@ -171,30 +168,30 @@ class: neb-slide
 ---
 
 <div class="deck-kicker">Structured evidence</div>
-<h1>What comes back from Search?</h1>
+<h1>What Search returns to the model</h1>
 
 <div class="result-shell">
   <div class="result-card">
     <span class="score">0.94</span>
     <div class="pill">RESULT 01</div>
-    <h2>New model release advances agentic reasoning</h2>
-    <div class="url">https://example.com/research/model-release</div>
-    <p>A clean, relevant snippet appears here — already stripped of navigation, ads, and unrelated page chrome...</p>
+    <h2>Lab ships new open model for agentic workflows</h2>
+    <div class="url">https://news.example.com/ai/model-release</div>
+    <p>A query-focused snippet — navigation, ads, and page chrome already stripped — so the model can skim evidence without ingesting the whole page.</p>
   </div>
 
   <div class="anatomy-list">
-    <div class="anatomy-item"><code>title</code><span>What the page is about</span></div>
-    <div class="anatomy-item"><code>url</code><span>The source we can cite or extract</span></div>
-    <div class="anatomy-item"><code>content</code><span>Relevant text for the current query</span></div>
-    <div class="anatomy-item"><code>score</code><span>Relative relevance from 0 to 1</span></div>
+    <div class="anatomy-item"><code>title</code><span>What the page claims to cover</span></div>
+    <div class="anatomy-item"><code>url</code><span>What you cite — or pass to Extract</span></div>
+    <div class="anatomy-item"><code>content</code><span>Snippet ranked for this query</span></div>
+    <div class="anatomy-item"><code>score</code><span>Relative relevance, 0 → 1</span></div>
   </div>
 </div>
 
-<div class="takeaway">Structured search results are compact enough to place directly into the model’s working context.</div>
+<CourseTakeaway text="These fields are small enough to put in context. Full pages wait for Extract — or they never get loaded." />
 
 
 <!--
-Contrast the short Search content snippet with Extract's raw_content field, which contains the cleaned full page. Avoid dumping complete articles into slides.
+Contrast Search content with Extract raw_content. Do not dump full articles onto slides.
 -->
 
 ---
@@ -202,7 +199,7 @@ class: neb-slide
 ---
 
 <div class="deck-kicker">From API to tool</div>
-<h1>A “tool” is just a function</h1>
+<h1>A tool is a function the model can request</h1>
 
 <div class="function-slide">
 
@@ -212,6 +209,7 @@ def internet_search(
     search_depth: str = "advanced",
     max_results: int = 5,
 ) -> str:
+    """Search the web for current, factual sources."""
     data = tavily_client.search(
         query,
         search_depth=search_depth,
@@ -224,6 +222,7 @@ def extract_content(
     urls: list[str],
     query: str | None = None,
 ) -> str:
+    """Read full pages when snippets are not enough."""
     data = tavily_client.extract(
         urls=urls,
         query=query,
@@ -236,25 +235,25 @@ def extract_content(
 <div class="principles">
   <div class="principle">
     <strong>Clear purpose</strong>
-    <span>The name and docstring communicate when the function is useful.</span>
+    <span>Name and docstring tell the model when the tool helps.</span>
   </div>
   <div class="principle">
-    <strong>Predictable inputs</strong>
-    <span>Typed arguments become constraints the model can follow.</span>
+    <strong>Typed inputs</strong>
+    <span>Arguments become the schema the model must follow.</span>
   </div>
   <div class="principle">
-    <strong>Model-friendly output</strong>
-    <span>Return compact text with titles, URLs, and evidence—not noisy objects.</span>
+    <strong>Compact output</strong>
+    <span>Return titles, URLs, and evidence — not raw API objects.</span>
   </div>
 </div>
 
 </div>
 
-<div class="takeaway">The function remains independently testable; later, an agent framework can orchestrate when it is called.</div>
+<CourseTakeaway text="Test the function like any other Python. Only then wire it into an agent loop." />
 
 
 <!--
-Notebook handoff: show section 3 and the format_results helper. Emphasize that the function can be tested normally before an LLM is involved.
+Notebook: section 3 and format_results. Emphasize unit-testability before any LLM is involved.
 -->
 
 ---
@@ -262,7 +261,7 @@ class: neb-slide
 ---
 
 <div class="deck-kicker">Tool calling</div>
-<h1>The schema makes a function visible to the model</h1>
+<h1>The schema is how the model sees your function</h1>
 
 <div class="schema-layout">
 
@@ -278,8 +277,8 @@ def internet_search(
 ```
 
 <div class="schema-points">
-  <div class="schema-point">Your code can execute this function.</div>
-  <div class="schema-point">The model cannot inspect Python directly.</div>
+  <div class="schema-point">Your app can call this directly.</div>
+  <div class="schema-point">The model never reads the Python source.</div>
 </div>
 
 </div>
@@ -301,7 +300,8 @@ def internet_search(
         "search_depth": {
           "type": "string",
           "enum": ["basic", "fast", "advanced"]
-        }
+        },
+        "max_results": { "type": "integer" }
       },
       "required": ["query"]
     }
@@ -310,18 +310,20 @@ def internet_search(
 ```
 
 <div class="schema-points">
-  <div class="schema-point"><code>name</code> chooses the function.</div>
-  <div class="schema-point"><code>description</code> teaches when to use it.</div>
-  <div class="schema-point"><code>parameters</code> constrain valid arguments.</div>
+  <div class="schema-point"><code>name</code> — which function to invoke</div>
+  <div class="schema-point"><code>description</code> — when to choose it</div>
+  <div class="schema-point"><code>parameters</code> — what arguments are valid</div>
 </div>
 
 </div>
 
 </div>
+
+<CourseTakeaway text="Write the description as agent policy: “use Search first; Extract only when snippets are thin.”" />
 
 
 <!--
-The description is part of the agent behavior. “Use this first to discover sources” helps the model distinguish Search from Extract.
+Description is behavior. “Use this first to discover sources” separates Search from Extract.
 -->
 
 ---
@@ -329,55 +331,46 @@ class: neb-slide
 ---
 
 <div class="deck-kicker">Execution boundary</div>
-<h1>The model requests; the application executes</h1>
+<h1>The model proposes. Your code disposes.</h1>
 
-<div class="sequence">
-  <div class="lane">
-    <div class="lane-title">User</div>
-    <div class="message">
-      <div class="n">1 · Question</div>
-      What were the biggest AI advancements this week?
-    </div>
+<div class="turn-grid">
+  <div class="turn-step" v-click>
+    <div class="turn-num">01</div>
+    <div class="turn-who">User</div>
+    <div class="turn-body">What were the biggest AI advancements this week?</div>
   </div>
-
-  <div class="lane">
-    <div class="lane-title">LLM</div>
-    <div class="message lime" v-click>
-      <div class="n">2 · Tool request</div>
-      internet_search({<br>&nbsp;&nbsp;"query": "AI advancements this week"<br>})
-    </div>
-    <div class="message" v-click>
-      <div class="n">6 · Continue</div>
-      Search again, extract a page, or produce the final answer.
-    </div>
+  <div class="turn-step lime" v-click>
+    <div class="turn-num">02</div>
+    <div class="turn-who">LLM</div>
+    <div class="turn-body mono">internet_search(query="AI advancements this week")</div>
   </div>
-
-  <div class="lane">
-    <div class="lane-title">Your Python</div>
-    <div class="message dark" v-click>
-      <div class="n">3 · Execute</div>
-      Parse arguments and call <span class="lime-text">TOOLS[name](**args)</span>
-    </div>
-    <div class="message dark" v-click>
-      <div class="n">5 · Append</div>
-      Add a <span class="lime-text">role: tool</span> message with the result.
-    </div>
+  <div class="turn-step dark" v-click>
+    <div class="turn-num">03</div>
+    <div class="turn-who">Your Python</div>
+    <div class="turn-body">Parse args → <span class="lime-text">TOOLS[name](**args)</span></div>
   </div>
-
-  <div class="lane">
-    <div class="lane-title">Tavily</div>
-    <div class="message" v-click>
-      <div class="n">4 · Evidence</div>
-      Ranked results with URLs and relevant content.
-    </div>
+  <div class="turn-step" v-click>
+    <div class="turn-num">04</div>
+    <div class="turn-who">Tavily</div>
+    <div class="turn-body">Ranked results with URLs and snippets</div>
+  </div>
+  <div class="turn-step dark" v-click>
+    <div class="turn-num">05</div>
+    <div class="turn-who">Your Python</div>
+    <div class="turn-body">Append a <span class="lime-text">role: tool</span> message with the result</div>
+  </div>
+  <div class="turn-step lime" v-click>
+    <div class="turn-num">06</div>
+    <div class="turn-who">LLM</div>
+    <div class="turn-body">Search again, extract a page, or answer with citations</div>
   </div>
 </div>
 
-<div class="takeaway">The LLM does not execute Python. It emits a structured request, and the application decides how to handle it.</div>
+<CourseTakeaway v-click text="The LLM never runs Python. It emits a structured request; the application chooses what to execute." />
 
 
 <!--
-Notebook handoff: run the single tool-call example in sections 4 and the manual turn in cells 20–22. Show that assistant_msg.content is often empty while tool_calls is populated.
+Notebook: single tool-call example (sections 4, cells 20–22). Show empty content + populated tool_calls.
 -->
 
 ---
@@ -395,14 +388,12 @@ def run_agent(question: str, max_steps: int = 10):
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": question},
     ]
-
     for step in range(1, max_steps + 1):
-        response = client.chat.completions.create(
+        msg = client.chat.completions.create(
             model=MODEL,
             messages=messages,
             tools=AGENT_TOOLS,
-        )
-        msg = response.choices[0].message
+        ).choices[0].message
         messages.append(msg.model_dump(exclude_none=True))
 
         if not msg.tool_calls:
@@ -416,29 +407,29 @@ def run_agent(question: str, max_steps: int = 10):
                 "tool_call_id": tc.id,
                 "content": result,
             })
-
     return "Stopped: reached max_steps."
 ```
 
 <div class="loop-diagram">
-  <div class="orbit-node one">Ask the model</div>
-  <div class="orbit-node two">Execute tools</div>
-  <div class="orbit-node three">Append results</div>
-  <div class="orbit-node four">Answer or repeat</div>
-  <div class="orbit-arrow a">↘</div>
-  <div class="orbit-arrow b">↙</div>
-  <div class="orbit-arrow c">↖</div>
-  <div class="orbit-arrow d">↗</div>
-  <div class="loop-center">AGENT<br>LOOP</div>
+  <div class="loop-steps">
+    <div class="loop-step"><span>01</span>Ask the model</div>
+    <div class="loop-step"><span>02</span>Execute tools</div>
+    <div class="loop-step"><span>03</span>Append results</div>
+    <div class="loop-step"><span>04</span>Answer or repeat</div>
+  </div>
+  <div class="loop-cycle">
+    <div class="loop-badge">AGENT LOOP</div>
+    <p>Stop when there are no <code>tool_calls</code>, or when <code>max_steps</code> is hit.</p>
+  </div>
 </div>
 
 </div>
 
-<div class="takeaway">Agent frameworks add capabilities around this loop, but the basic control flow remains the same.</div>
+<CourseTakeaway text="Frameworks wrap this loop. They do not replace it." />
 
 
 <!--
-Notebook handoff: run the final implementation in sections 5, cells 24–26. Walk the loop in exactly this order: model call, termination check, tool execution, tool-result append.
+Notebook: final implementation (sections 5, cells 24–26). Walk: model call → stop check → execute → append.
 -->
 
 ---
@@ -446,39 +437,39 @@ class: neb-slide
 ---
 
 <div class="deck-kicker">Observability</div>
-<h1>A run should leave a trace</h1>
+<h1>Every run should leave a trace</h1>
 
 <div class="trace-line">
   <div class="trace-event" v-click>
-    <div class="num">01 · STEP 1</div>
-    <h3>Search</h3>
+    <div class="num">01 · SEARCH</div>
+    <h3>Cast a net</h3>
     <p><span class="mono">query:</span><br>“AI advancements this week”</p>
   </div>
   <div class="trace-arrow" v-click>→</div>
   <div class="trace-event" v-click>
-    <div class="num">02 · STEP 2</div>
-    <h3>Search again</h3>
+    <div class="num">02 · SEARCH</div>
+    <h3>Narrow the focus</h3>
     <p><span class="mono">query:</span><br>“new AI model releases July 2026”</p>
   </div>
   <div class="trace-arrow" v-click>→</div>
   <div class="trace-event" v-click>
-    <div class="num">03 · STEP 3</div>
-    <h3>Extract</h3>
-    <p><span class="mono">urls:</span><br>the two strongest primary sources</p>
+    <div class="num">03 · EXTRACT</div>
+    <h3>Read the best pages</h3>
+    <p><span class="mono">urls:</span><br>two strongest primary sources</p>
   </div>
   <div class="trace-arrow" v-click>→</div>
   <div class="trace-event final" v-click>
-    <div class="num">04 · STEP 4</div>
-    <h3>Final answer</h3>
-    <p>Grounded synthesis with a URL attached to every factual claim.</p>
+    <div class="num">04 · ANSWER</div>
+    <h3>Cite every claim</h3>
+    <p>Grounded synthesis with a URL on each factual statement.</p>
   </div>
 </div>
 
-<div class="takeaway" v-click>A stored trace lets us inspect tool choice, arguments, returned evidence, and stopping behavior after the run.</div>
+<CourseTakeaway v-click text="A stored trace shows tool choice, arguments, evidence, and why the loop stopped — after the run is over." />
 
 
 <!--
-Show ToolTracer.events and ToolTracer.show() in the notebook. Tracing is how we debug which tool was chosen, with which arguments, and what evidence came back.
+Show ToolTracer.events and ToolTracer.show() in the notebook. Tracing is how you debug tool choice.
 -->
 
 ---
@@ -486,36 +477,36 @@ class: neb-slide
 ---
 
 <div class="deck-kicker">Scope of the example</div>
-<h1>Limitations of the minimal loop</h1>
+<h1>What this minimal loop still lacks</h1>
 
 <div class="grid-4 failure-grid">
   <div class="card dark">
     <div class="index">01</div>
-    <h3>No planning</h3>
-    <p>It reacts one call at a time instead of decomposing a complex question.</p>
+    <h3>No plan</h3>
+    <p>It reacts call-by-call instead of decomposing a hard question up front.</p>
   </div>
   <div class="card dark">
     <div class="index">02</div>
-    <h3>Redundant calls</h3>
-    <p>Nothing prevents repeating a query or extracting the same URL twice.</p>
+    <h3>Duplicate work</h3>
+    <p>Nothing stops a repeated query or a second extract of the same URL.</p>
   </div>
   <div class="card dark">
     <div class="index">03</div>
-    <h3>Weak source control</h3>
-    <p>High ranking does not automatically mean authoritative or trustworthy.</p>
+    <h3>Blind ranking</h3>
+    <p>A high score is not the same as an authoritative or trustworthy source.</p>
   </div>
   <div class="card dark">
     <div class="index">04</div>
     <h3>Context bloat</h3>
-    <p>Full pages accumulate in the message history until the context window fills.</p>
+    <p>Full pages pile into message history until the window is full.</p>
   </div>
 </div>
 
-<div class="takeaway">Next: query planning, deduplication, source filtering, and summarization.</div>
+<CourseTakeaway text="Next module: query planning, deduplication, source filtering, and summarization." />
 
 
 <!--
-These limitations motivate the next chapter's search pipeline and eventually the competitor-research agent. Do not frame them as failures of tool calling; they are missing orchestration layers.
+These gaps motivate the search pipeline — not failures of tool calling, but missing orchestration.
 -->
 
 ---
@@ -524,13 +515,13 @@ layout: course-summary
 
 <div class="deck-kicker">Summary</div>
 <h1>Key ideas from<br><span>this module</span></h1>
-<p>We used two retrieval tools and a small application-controlled loop to produce answers grounded in current web sources.</p>
+<p>Two retrieval tools plus an application-owned loop turn a frozen LLM into a research agent that can cite the live web.</p>
 
 <div class="recap-row">
-  <SummaryItem number="01" label="Search" />
-  <SummaryItem number="02" label="Extract" />
-  <SummaryItem number="03" label="Tool call" />
-  <SummaryItem number="04" label="Loop" />
+  <SummaryItem number="01" label="Search" detail="Discover sources" />
+  <SummaryItem number="02" label="Extract" detail="Read full pages" />
+  <SummaryItem number="03" label="Schema" detail="Expose the tool" />
+  <SummaryItem number="04" label="Loop" detail="Call until done" />
 </div>
 
 ::footer::
@@ -538,5 +529,5 @@ layout: course-summary
 NEXT · BUILDING A SEARCH PIPELINE
 
 <!--
-Close by restating the transferable idea: an agent is a model inside an application-controlled loop, with tools providing fresh evidence.
+Close on the transferable idea: an agent is a model inside an application-controlled loop; tools supply fresh evidence.
 -->
