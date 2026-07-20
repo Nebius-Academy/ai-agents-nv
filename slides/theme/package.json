@@ -1,0 +1,26 @@
+{
+  "name": "slidev-theme-nebius-agents",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared Slidev theme for the Nebius AI Agents course",
+  "keywords": [
+    "slidev-theme",
+    "slidev"
+  ],
+  "engines": {
+    "node": ">=20",
+    "slidev": ">=52"
+  },
+  "slidev": {
+    "defaults": {
+      "colorSchema": "dark",
+      "aspectRatio": "16/9",
+      "canvasWidth": 1600,
+      "transition": "fade"
+    }
+  },
+  "dependencies": {
+    "@slidev/theme-default": "^0.25.0"
+  }
+}
