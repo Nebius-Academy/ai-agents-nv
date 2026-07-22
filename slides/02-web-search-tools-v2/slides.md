@@ -1,9 +1,8 @@
 ---
 theme: nebius-agents
-title: Giving an LLM the Web (v2 draft)
+title: Giving an LLM tools to access the web
 info: |
   Module 02 — Web search with Tavily and your first agentic loop.
-  v2 draft: problem → solution reorder per course review.
 author: Nebius AI Agents Course
 colorSchema: dark
 aspectRatio: 16/9
@@ -15,9 +14,9 @@ drawings:
 layout: course-cover
 ---
 
-<div class="deck-kicker">AI Agents · Module 02 · v2 draft</div>
+<div class="deck-kicker">AI Agents · Module 02</div>
 <h1>Give an LLM the web<br>with a first <span>agent loop</span></h1>
-<p>Start from the problem: frozen model knowledge. Then add Tavily retrieval and a Python-owned loop that can cite the live web.</p>
+<p>You already called a simple tool. Now: Tavily Search + Extract inside a Python loop — the primitive under competitor research, not the finished agent.</p>
 
 ::provider::
 
@@ -29,7 +28,6 @@ layout: course-cover
 </div>
 
 <!--
-v2 arc: problem (course project + cutoff) → Search/Extract principle → signup → build the loop.
 Notebook: 02_web_search_tools.ipynb
 -->
 
@@ -44,7 +42,7 @@ class: neb-slide
   <div class="problem-stake">
     <div class="eyebrow">Course project</div>
     <h2>A competitor matrix goes stale in weeks</h2>
-    <p>Pricing pages change. Features ship. Funding rounds land. The agent you build in this course has to keep those facts current — not invent them from memory.</p>
+    <p>Pricing changes. Features ship. Funding lands. Your agent has to fetch current facts — not invent them.</p>
     <ul>
       <li>Who competes with us right now?</li>
       <li>What do they charge this quarter?</li>
@@ -56,15 +54,14 @@ class: neb-slide
     <div class="eyebrow">Knowledge cutoff</div>
     <div class="cutoff-model">Nemotron 3 Nano</div>
     <div class="cutoff-date">June 25, 2025</div>
-    <p>Official pre-training data freshness on Hugging Face. Anything after that date is guesswork unless the agent retrieves it.</p>
-    <div class="cutoff-note">Confirm which Nemotron revisions Token Factory serves — ask Alex when he’s back.</div>
+    <p>Pre-training data freshness on Hugging Face. After that date, retrieve — don’t guess.</p>
   </div>
 </div>
 
-<CourseTakeaway text="For competitor research, retrieval is not a nice-to-have. It is how the agent stays honest." />
+<CourseTakeaway text="If a fact can change after the cutoff, require a URL before you trust the answer." />
 
 <!--
-Open on the project, not on signup. Cutoff is evidence for the problem — not a trivia bullet.
+Cutoff caveat (which TF revision): confirm with Alex.
 Source: NVIDIA-Nemotron-3-Nano-30B-A3B-Base-BF16 Data Freshness.
 -->
 
@@ -76,12 +73,13 @@ class: neb-slide
 
 <div class="hero-statement">
 <div class="display">Why does an LLM need<br><span class="lime">web search?</span></div>
+<p class="prompt-line">Ask a model (no search): <em>“What were the biggest AI model releases this month?”</em></p>
 <div class="grid-2">
 <CompareCard
   number="LLM"
   eyebrow="Model knowledge"
   title="Strong reasoning, frozen facts"
-  :items="['Excellent language and reasoning', 'Training ends; the world keeps moving', 'Recent prices, releases, and news go stale']"
+  :items="['Excellent language and reasoning', 'Training ends; the world keeps moving', 'Recent releases and news go stale']"
 />
 <CompareCard
   number="WEB"
@@ -95,7 +93,7 @@ class: neb-slide
 </div>
 
 <!--
-Same contrast as v1, earned by the project slide. Hook: “What did competitor X ship this month?”
+Optional live demo: fail the no-tools prompt, then continue.
 -->
 
 ---
@@ -118,17 +116,30 @@ class: neb-slide
     number="02"
     eyebrow="Read"
     title="Extract"
-    description="Pass one or more URLs. Get the cleaned full page as markdown or text, ready for deeper reading."
+    description="Pass one or more URLs. Get the cleaned full page as markdown or text."
     badge="URLS → CONTENT"
     variant="lime"
   />
 </div>
 
-<CourseTakeaway text="Search first to shortlist. Extract only when the snippet is not enough to support a claim." />
+<CourseTakeaway text="Search first to shortlist. Extract only when the snippet cannot support the claim." />
 
-<!--
-General principle before signup or HTTP details. This is the mental model for the whole module.
--->
+---
+class: neb-slide
+---
+
+<div class="deck-kicker">The research pattern</div>
+<h1>Two tools. One loop.</h1>
+
+<div class="flow-row pattern-3">
+  <ProcessStep v-click number="01" label="Search" title="Discover" description="Find ranked sources for a current question." />
+  <div class="flow-arrow" v-click>→</div>
+  <ProcessStep v-click number="02" label="Extract" title="Read" description="Load a full page only when the snippet is thin." />
+  <div class="flow-arrow" v-click>→</div>
+  <ProcessStep v-click number="03" label="Answer" title="Cite" description="Answer from evidence — or search again." />
+</div>
+
+<CourseTakeaway v-click text="The model chooses the next step." />
 
 ---
 class: neb-slide
@@ -179,32 +190,7 @@ class: neb-slide
 <CourseTakeaway text="Put TAVILY_API_KEY in lesson/.env before you run the notebook. Keys always start with tvly-." />
 
 <!--
-Kept the screenshot flow on purpose. Screencast of the Tavily UI can replace or sit beside this later.
--->
-
----
-class: neb-slide
----
-
-<div class="deck-kicker">The research pattern</div>
-<h1>Five decisions every research agent makes</h1>
-
-<div class="flow-row">
-  <ProcessStep v-click number="01" label="Question" title="Frame" description="What must be current and verifiable?" />
-  <div class="flow-arrow" v-click>→</div>
-  <ProcessStep v-click number="02" label="Search" title="Discover" description="Cast a wide net for useful sources." />
-  <div class="flow-arrow" v-click>→</div>
-  <ProcessStep v-click number="03" label="Rank" title="Shortlist" description="Keep the strongest, most relevant pages." />
-  <div class="flow-arrow" v-click>→</div>
-  <ProcessStep v-click number="04" label="Extract" title="Read" description="Fetch full pages only when needed." />
-  <div class="flow-arrow" v-click>→</div>
-  <ProcessStep v-click number="05" label="Answer" title="Cite" description="Synthesize from evidence; cite every claim." />
-</div>
-
-<CourseTakeaway v-click text="The agent decides when to search again, when to extract, and when it has enough to answer." />
-
-<!--
-Reveal one stage at a time. For competitor research: Frame = which dimensions must be live (pricing, features, funding).
+Screencast of the Tavily UI can replace or sit beside this in recording.
 -->
 
 ---
@@ -221,7 +207,7 @@ response = requests.post(
     "https://api.tavily.com/search",
     headers={"Authorization": f"Bearer {TAVILY_API_KEY}"},
     json={
-        "query": "Notion competitors pricing 2026",
+        "query": "biggest AI model releases this month",
         "search_depth": "advanced",
         "max_results": 5,
         "time_range": "month",
@@ -233,18 +219,14 @@ data = response.json()
 
 <div class="api-stack">
   <CodeAsideItem label="Endpoint"><strong>POST</strong> /search</CodeAsideItem>
-  <CodeAsideItem label="Send" value="query + additional runtime parameters" />
+  <CodeAsideItem label="Send" value="query + runtime parameters" />
   <CodeAsideItem label="Receive" value="Scored results with URLs and snippets" />
   <CodeAsideItem label="Next"><strong>POST</strong> /extract on chosen URLs</CodeAsideItem>
 </div>
 
 </div>
 
-<CourseTakeaway text="SDKs cut boilerplate. They do not change the mental model: request in, structured evidence out." />
-
-<!--
-Query nudged toward competitor research to keep the project thread alive.
--->
+<CourseTakeaway text="SDKs cut boilerplate. They do not change the model: request in, structured evidence out." />
 
 ---
 class: neb-slide
@@ -255,11 +237,11 @@ class: neb-slide
 
 <div class="result-shell">
   <div class="result-card">
-    <span class="score">0.94</span>
+    <span class="score">0.96</span>
     <div class="pill">01 RESULT</div>
-    <h2>Lab ships new open model for agentic workflows</h2>
-    <div class="url">https://news.example.com/ai/model-release</div>
-    <p>A query-focused snippet — navigation, ads, and page chrome already stripped — so the model can skim evidence without ingesting the whole page.</p>
+    <h2>Latest AI Model Releases — July 2026</h2>
+    <div class="url">https://aireleasetracker.com/latest</div>
+    <p>Kimi K3 (Jul 16), Muse Spark 1.1 (Jul 9), Grok 4.5 (Jul 8) — a query-focused snippet so the model can skim without loading the full page.</p>
   </div>
 
   <div class="anatomy-list">
@@ -270,11 +252,7 @@ class: neb-slide
   </div>
 </div>
 
-<CourseTakeaway text="These fields are small enough to put in context. Full pages wait for Extract — or they never get loaded." />
-
-<!--
-Contrast Search content with Extract raw_content. Do not dump full articles onto slides.
--->
+<CourseTakeaway text="These fields are small enough for context. Full pages wait for Extract — or never load." />
 
 ---
 class: neb-slide
@@ -317,7 +295,7 @@ def extract_content(
 <div class="principles">
   <div class="principle">
     <strong>Clear purpose</strong>
-    <span>Name and docstring tell the model when the tool helps.</span>
+    <span>Name and docstring tell the model when to use it.</span>
   </div>
   <div class="principle">
     <strong>Typed inputs</strong>
@@ -334,7 +312,7 @@ def extract_content(
 <CourseTakeaway text="Test the function like any other Python. Only then wire it into an agent loop." />
 
 <!--
-Notebook: section 3 and format_results. Emphasize unit-testability before any LLM is involved.
+Notebook: section 3 and format_results.
 -->
 
 ---
@@ -342,7 +320,8 @@ class: neb-slide
 ---
 
 <div class="deck-kicker">Tool calling</div>
-<h1>The schema is how the model sees your function</h1>
+<h1>Same schema pattern — now for Tavily</h1>
+<p class="slide-lead">You saw tool calling earlier. Here is Search exposed the same way.</p>
 
 <div class="schema-layout">
 
@@ -358,7 +337,7 @@ def internet_search(
 ```
 
 <div class="schema-points">
-  <div class="schema-point">Your app must call this directly.</div>
+  <div class="schema-point">Your app must call this function directly.</div>
   <div class="schema-point">The model never reads the Python source.</div>
 </div>
 
@@ -392,7 +371,7 @@ def internet_search(
 
 <div class="schema-points">
   <div class="schema-point"><code>name</code> — which function to invoke</div>
-  <div class="schema-point"><code>description</code> — when to choose it</div>
+  <div class="schema-point"><code>description</code> — when to choose Search vs Extract</div>
   <div class="schema-point"><code>parameters</code> — what arguments are valid</div>
 </div>
 
@@ -400,22 +379,18 @@ def internet_search(
 
 </div>
 
-<CourseTakeaway text="Write the description as agent policy: “use Search first; Extract only when snippets are thin.”" />
-
-<!--
-“must call” stresses the execution boundary before the loop slide.
--->
+<CourseTakeaway text="Write the description as policy: use Search first; Extract only when snippets are thin." />
 
 ---
 class: neb-slide
 ---
 
 <div class="deck-kicker">Execution boundary</div>
-<h1>The model proposes. Your code disposes.</h1>
+<h1>The model proposes. Your code runs.</h1>
 
 <div class="cycle-entry" v-click>
 <span class="cycle-entry-label">01 · User</span>
-<span class="cycle-entry-q">What were the biggest AI advancements this week?</span>
+<span class="cycle-entry-q">What were the biggest AI model releases this month?</span>
 </div>
 
 <div class="cycle-ring">
@@ -458,7 +433,7 @@ class: neb-slide
 <CourseTakeaway v-click text="The LLM never runs Python. It emits a structured request; the application chooses what to execute." />
 
 <!--
-Rough loop for designers: one horizontal ring + explicit return. Notebook: cells 20–22.
+Notebook: cells 20–22.
 -->
 
 ---
@@ -513,10 +488,10 @@ def run_agent(question: str, max_steps: int = 10):
 
 </div>
 
-<CourseTakeaway text="Frameworks wrap this loop. They do not replace it." />
+<CourseTakeaway text="This is the loop DeepAgents will wrap next. Frameworks do not replace it." />
 
 <!--
-Show ToolTracer.events and ToolTracer.show() in the notebook. Tracing is how you debug tool choice.
+Show ToolTracer in the notebook.
 -->
 
 ---
@@ -540,7 +515,7 @@ class: neb-slide
   <div class="card dark">
     <div class="index">03</div>
     <h3>Blind ranking</h3>
-    <p>A high score is not the same as an authoritative or trustworthy source.</p>
+    <p>A high score is not the same as an authoritative source.</p>
   </div>
   <div class="card dark">
     <div class="index">04</div>
@@ -549,9 +524,7 @@ class: neb-slide
   </div>
 </div>
 
-<!--
-These gaps motivate the search pipeline — and later the full competitor-research multi-agent system.
--->
+<CourseTakeaway text="Next: Orchestrating deep research — turn this loop into a full search pipeline with DeepAgents." />
 
 ---
 layout: course-summary
@@ -559,7 +532,7 @@ layout: course-summary
 
 <div class="deck-kicker">Summary</div>
 <h1>Key ideas from<br><span>this module</span></h1>
-<p>Frozen models cannot research competitors. Two retrieval tools plus an application-owned loop turn them into agents that can cite the live web.</p>
+<p>Two retrieval tools plus a Python-owned loop — the primitive under competitor research.</p>
 
 <div class="recap-row">
   <SummaryItem number="01" label="Search" detail="Discover sources" />
@@ -568,6 +541,6 @@ layout: course-summary
   <SummaryItem number="04" label="Loop" detail="Call until done" />
 </div>
 
-<!--
-Close on the transferable idea: an agent is a model inside an application-controlled loop; tools supply fresh evidence.
--->
+::footer::
+
+NEXT · <code>02_web_search_tools.ipynb</code> · THEN ORCHESTRATING DEEP RESEARCH

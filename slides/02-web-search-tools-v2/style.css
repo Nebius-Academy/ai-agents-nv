@@ -206,6 +206,13 @@
   margin-top: 36px;
 }
 
+.flow-row.pattern-3 {
+  grid-template-columns: 1fr 48px 1fr 48px 1fr;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .flow-node {
   position: relative;
   min-height: 210px;
@@ -705,3 +712,98 @@
 .failure-grid .card h3 { font-size: 26px; }
 .failure-grid .card p { color: var(--nb-muted); font-size: 17px; line-height: 1.42; }
 .failure-grid .index { margin-bottom: 32px; color: var(--nb-lime); font: 600 14px 'IBM Plex Mono', monospace; }
+
+/* Pedagogy helpers: objectives, leads, retrieval checks */
+.slide-lead {
+  margin: 8px 0 0;
+  color: var(--nb-muted);
+  font-size: 20px;
+  line-height: 1.35;
+}
+
+.prompt-line {
+  margin: 0 0 24px;
+  max-width: 1100px;
+  color: var(--nb-pale);
+  font-size: 22px;
+  line-height: 1.4;
+}
+
+.prompt-line em {
+  color: var(--nb-lime);
+  font-style: normal;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.92em;
+}
+
+.goals-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.goal-card {
+  padding: 22px 24px;
+  border: 1px solid rgba(229, 243, 255, .16);
+  border-radius: 20px;
+  background: var(--nb-surface);
+}
+
+.goal-num {
+  margin-bottom: 14px;
+  color: var(--nb-lime);
+  font: 600 13px/1 'IBM Plex Mono', monospace;
+  letter-spacing: .08em;
+}
+
+.goal-card h3 {
+  margin: 0 0 10px;
+  font: 500 26px/1.15 'Source Serif 4', Georgia, serif;
+  letter-spacing: -.02em;
+}
+
+.goal-card p {
+  margin: 0;
+  color: var(--nb-muted);
+  font-size: 17px;
+  line-height: 1.4;
+}
+
+.check-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.check-card {
+  min-height: 280px;
+  padding: 22px 24px;
+  border: 1px solid rgba(229, 243, 255, .16);
+  border-radius: 20px;
+  background: var(--nb-surface);
+}
+
+.check-q {
+  margin-bottom: 16px;
+  color: var(--nb-lime);
+  font: 600 13px/1 'IBM Plex Mono', monospace;
+  letter-spacing: .08em;
+}
+
+.check-card > p {
+  margin: 0;
+  color: var(--nb-pale);
+  font: 500 22px/1.3 'Source Serif 4', Georgia, serif;
+  letter-spacing: -.015em;
+}
+
+.check-a {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(201, 232, 90, .28);
+  color: var(--nb-muted);
+  font-size: 16px;
+  line-height: 1.4;
+}
