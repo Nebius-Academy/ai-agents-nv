@@ -2,18 +2,29 @@
 
 Everything mechanical lives here so the teaching notebook only shows:
   - Data (GOLD_SOURCES, GOLD_FACTS)
-  - Prompts (RETRIEVAL_PROMPT, EXTRACTION_PROMPT, RECOMMENDATION_PROMPT)
+  - Prompts (EXTRACTION_PROMPT, RECOMMENDATION_PROMPT)
   - Top-level calls (set_config, run_deep_research, grade_saved_run,
-    run_extraction_eval, print_config_comparison)
+    print_config_comparison)
 
-Usage in the notebook:
+Typical usage in the notebook:
 
-    from eval_harness import *          # pricing fetch happens on import
+    from eval_harness import (
+        set_config, run_deep_research, grade_saved_run,
+        print_config_comparison,
+    )
+
+    # model constants (GEMMA, NANO, SUPER) live in the notebook, not here
+
     set_config("baseline", lead=SUPER, worker=NANO, judge=NANO)
     run_dir = run_deep_research(RECOMMENDATION_PROMPT)
-    scores  = grade_saved_run(run_dir, GOLD_SOURCES, GOLD_FACTS)
+    scores  = grade_saved_run(run_dir, GOLD_SOURCES, GOLD_FACTS, EXTRACTION_PROMPT)
     ...
     print_config_comparison()
+
+`grade_saved_run` grades all three stages (retrieval, extraction,
+recommendation) for the current config. Retrieval and recommendation are
+graded from `run_dir`'s saved artifacts; extraction runs fresh with the
+current LEAD_MODEL and JUDGE_MODEL.
 
 Requires NEBIUS_API_KEY and TAVILY_API_KEY to be in the environment before
 import (the pricing lookup runs at import time).
@@ -387,9 +398,8 @@ are involved. Rewordings PASS; missing material numbers or entities FAIL."""
 # =============================================================================
 # Multi-config runner
 # =============================================================================
-GEMMA = "google/gemma-3-27b-it"
-NANO  = "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B"
-SUPER = "nvidia/nemotron-3-super-120b-a12b"
+# Model-name constants (GEMMA, NANO, SUPER) live in the notebook, not here --
+# they're part of what students read and choose from.
 
 CURRENT_CONFIG = None
 
@@ -427,9 +437,14 @@ def run_deep_research(prompt):
     return run_dir
 
 
-def grade_saved_run(run_dir, gold_sources, gold_facts):
-    """Grade retrieval AND recommendation from a saved run's artifacts. Only
-    the judge LLM is called here; the agent is not re-invoked."""
+def grade_saved_run(run_dir, gold_sources, gold_facts, extraction_prompt):
+    """Grade retrieval, extraction, and recommendation for the current config.
+
+    - Retrieval + recommendation are graded from `run_dir`'s saved artifacts.
+    - Extraction is run fresh (it doesn't use the deep-research run at all --
+      it tests LEAD_MODEL + JUDGE_MODEL directly on the gold source pages).
+    - All three costs stash into STAGE_COST[(CURRENT_CONFIG, ...)].
+    """
     assert CURRENT_CONFIG, "call set_config(...) first"
 
     ret = grade_retrieval(run_dir, gold_sources)
@@ -438,7 +453,7 @@ def grade_saved_run(run_dir, gold_sources, gold_facts):
     print(f"  coverage:         {100*ret['coverage']:.0f}%   ({ret['hits']}/{ret['total']})")
     for comp, hit in ret["per_competitor"].items():
         print(f"    {comp:20s}  {'found' if hit else 'MISSED'}")
-    _record_cost("retrieval_grading", 0.0)
+    # Retrieval grading is programmatic (no LLM). Nothing to record.
 
     cb = UsageMetadataCallbackHandler()
     rec = grade_synthesis(run_dir, gold_facts, cb)
@@ -450,7 +465,11 @@ def grade_saved_run(run_dir, gold_sources, gold_facts):
     print(f"  Fact recall: {rec['facts_hit']} correctly stated   ({100*rec['fact_recall']:.0f}%)")
     _record_cost("recommendation_grading", nebius)
 
-    return {"retrieval": ret, "recommendation": rec}
+    print(f"\n--- Extraction ---")
+    ext = run_extraction_eval(gold_facts, extraction_prompt)
+    # run_extraction_eval records its own cost under STAGE_COST[(CURRENT_CONFIG, "extraction")].
+
+    return {"retrieval": ret, "recommendation": rec, "extraction": ext}
 
 
 def print_config_comparison():
