@@ -275,8 +275,11 @@ Answer two questions about the report below.
 {report}
 """
         j = struct.invoke(p, config={"callbacks": [cb]})
-        per_fact.append({**gf, "in_scope": j.competitor_in_scope,
-                                "contains": j.contains})
+        if j is None:
+            per_fact.append({**gf, "in_scope": False, "contains": False})
+        else:
+            per_fact.append({**gf, "in_scope": j.competitor_in_scope,
+                                    "contains": j.contains})
 
     in_scope = [pf for pf in per_fact if pf["in_scope"]]
     hits = sum(pf["contains"] for pf in in_scope)
@@ -376,7 +379,10 @@ Does any extracted claim substantively agree with the reference? Same
 underlying fact, same numbers if numbers are involved, same names if names
 are involved. Rewordings PASS; missing material numbers or entities FAIL."""
         j = judge_struct.invoke(prompt, config={"callbacks": [cb]})
-        per_fact.append({**gf, "contains": j.contains, "why": j.why})
+        if j is None:
+            per_fact.append({**gf, "contains": False, "why": "judge returned no structured output"})
+        else:
+            per_fact.append({**gf, "contains": j.contains, "why": j.why})
 
     hits = sum(pf["contains"] for pf in per_fact)
     total = len(per_fact)
