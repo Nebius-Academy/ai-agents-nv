@@ -129,6 +129,27 @@
   white-space: pre-wrap;
 }
 
+.cover-outcome {
+  width: 900px;
+  margin-top: 28px;
+  padding: 16px 20px;
+  border-left: 4px solid var(--nb-lime);
+  border-radius: 0 16px 16px 0;
+  background: rgba(0, 26, 43, .58);
+  color: #f5fafc;
+  font-size: 20px;
+  line-height: 1.42;
+}
+
+.cover-outcome-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--nb-lime);
+  font: 700 12px/1 'IBM Plex Mono', monospace;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
 .cover-provider-lockup {
   position: absolute;
   right: 76px;
@@ -275,6 +296,19 @@
 }
 
 .result-card .score { float: right; color: #456000; font: 700 19px 'IBM Plex Mono', monospace; }
+
+.result-card .example-tag {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 5px 11px;
+  border: 1px solid rgba(69, 96, 0, .35);
+  border-radius: 999px;
+  color: #456000;
+  font: 700 11px/1 'IBM Plex Mono', monospace;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
 .result-card h2 { max-width: 650px; margin: 10px 0; color: var(--nb-ink); font-size: 29px; }
 .result-card .url { margin-bottom: 20px; color: #496979; font: 500 15px 'IBM Plex Mono', monospace; }
 .result-card p { color: var(--nb-ink); font-size: 19px; line-height: 1.45; }
@@ -712,6 +746,18 @@
 .failure-grid .card h3 { font-size: 26px; }
 .failure-grid .card p { color: var(--nb-muted); font-size: 17px; line-height: 1.42; }
 .failure-grid .index { margin-bottom: 32px; color: var(--nb-lime); font: 600 14px 'IBM Plex Mono', monospace; }
+
+.summary-loop {
+  margin-top: 30px;
+  padding: 18px 24px;
+  border: 1px solid rgba(201, 232, 90, .32);
+  border-radius: 16px;
+  background: rgba(201, 232, 90, .08);
+  color: var(--nb-pale);
+  font: 500 21px/1.45 'IBM Plex Mono', monospace;
+}
+
+.summary-loop span { color: var(--nb-lime); font-weight: 700; }
 
 /* Pedagogy helpers: objectives, leads, retrieval checks */
 .slide-lead {

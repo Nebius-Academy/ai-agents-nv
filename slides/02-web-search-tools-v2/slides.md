@@ -18,6 +18,11 @@ layout: course-cover
 <h1>Give an LLM the web<br>with a first <span>agent loop</span></h1>
 <p>You already called a simple tool. Now: Tavily Search + Extract inside a Python loop — the primitive under competitor research, not the finished agent.</p>
 
+<div class="cover-outcome">
+  <span class="cover-outcome-label">Learning outcome</span>
+  By the end, you can expose Search and Extract as typed tools and run a Python tool-calling loop that answers current-fact questions with cited sources.
+</div>
+
 ::provider::
 
 <div class="cover-provider-lockup">
@@ -69,27 +74,27 @@ Source: NVIDIA-Nemotron-3-Nano-30B-A3B-Base-BF16 Data Freshness.
 class: neb-slide
 ---
 
-<div class="deck-kicker">Why tools?</div>
+<div class="deck-kicker">The mental model</div>
 
 <div class="hero-statement">
-<div class="display">Why does an LLM need<br><span class="lime">web search?</span></div>
+<div class="display">The model reasons.<br>The web supplies the <span class="lime">evidence.</span></div>
 <p class="prompt-line">Ask a model (no search): <em>“What were the biggest AI model releases this month?”</em></p>
 <div class="grid-2">
 <CompareCard
   number="LLM"
-  eyebrow="Model knowledge"
-  title="Strong reasoning, frozen facts"
-  :items="['Excellent language and reasoning', 'Training ends; the world keeps moving', 'Recent releases and news go stale']"
+  eyebrow="Reasoning engine"
+  title="Strong reasoning, no new facts"
+  :items="['Plans, compares, and synthesizes', 'Reasons only over what it can see', 'Cannot fetch what changed since training']"
 />
 <CompareCard
   number="WEB"
-  eyebrow="External evidence"
+  eyebrow="Evidence source"
   title="Current, citable, checkable"
   variant="lime"
   :items="['News, docs, releases, and prices', 'URLs you can verify and cite', 'Fresh context the model can reason over']"
 />
 </div>
-<CourseTakeaway text="For anything that changes after training, the model needs a retrieval tool — not a longer prompt." />
+<CourseTakeaway text="Division of labor: reasoning is the model's job; current facts are the web's job. Tools connect the two." />
 </div>
 
 <!--
@@ -134,12 +139,17 @@ class: neb-slide
 <div class="flow-row pattern-3">
   <ProcessStep v-click number="01" label="Search" title="Discover" description="Find ranked sources for a current question." />
   <div class="flow-arrow" v-click>→</div>
-  <ProcessStep v-click number="02" label="Extract" title="Read" description="Load a full page only when the snippet is thin." />
+  <ProcessStep v-click number="02" label="Decide" title="Evidence enough?" description="The model judges whether the snippets support the answer." />
   <div class="flow-arrow" v-click>→</div>
-  <ProcessStep v-click number="03" label="Answer" title="Cite" description="Answer from evidence — or search again." />
+  <ProcessStep v-click number="03" label="Answer" title="Cite" description="Answer from evidence, with URLs." />
 </div>
 
-<CourseTakeaway v-click text="The model chooses the next step." />
+<div class="cycle-return" v-click>
+  <span class="cycle-return-arrow">↺</span>
+  <span>Not enough? The model picks the next step — <strong>Extract</strong> a promising URL or <strong>Search again</strong> — then decides once more. Extract is optional; any step can repeat, in any order.</span>
+</div>
+
+<CourseTakeaway v-click text="Choosing — and repeating — the next step is what makes this an agent loop, not a predefined pipeline." />
 
 ---
 class: neb-slide
@@ -239,9 +249,10 @@ class: neb-slide
   <div class="result-card">
     <span class="score">0.96</span>
     <div class="pill">01 RESULT</div>
+    <span class="example-tag">Illustrative example</span>
     <h2>Latest AI Model Releases — July 2026</h2>
-    <div class="url">https://aireleasetracker.com/latest</div>
-    <p>Kimi K3 (Jul 16), Muse Spark 1.1 (Jul 9), Grok 4.5 (Jul 8) — a query-focused snippet so the model can skim without loading the full page.</p>
+    <div class="url">https://example.com/ai-model-releases-july-2026</div>
+    <p>Model Alpha (Jul 16), Model Beta (Jul 9), Model Gamma (Jul 8) — a query-focused snippet so the model can skim without loading the full page.</p>
   </div>
 
   <div class="anatomy-list">
@@ -253,6 +264,11 @@ class: neb-slide
 </div>
 
 <CourseTakeaway text="These fields are small enough for context. Full pages wait for Extract — or never load." />
+
+<!--
+Recording: the slide example is illustrative (neutral names, reserved example.com URL).
+If the video shows a live search demo instead, capture real output and display the retrieval date.
+-->
 
 ---
 class: neb-slide
@@ -539,6 +555,10 @@ layout: course-summary
   <SummaryItem number="02" label="Extract" detail="Read full pages" />
   <SummaryItem number="03" label="Schema" detail="Expose the tool" />
   <SummaryItem number="04" label="Loop" detail="Call until done" />
+</div>
+
+<div class="summary-loop">
+  The model proposes a tool call <span>→</span> Python executes it <span>→</span> the result returns to the model <span>→</span> repeat until an answer.
 </div>
 
 ::footer::
