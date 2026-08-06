@@ -353,7 +353,7 @@ def grade_saved_run(run_dir, gold_sources, gold_facts):
     for k, v in rec["rubric_scores"].items():
         print(f"    {'YES' if v else ' NO'}  {k}: {rec['rubric_reasons'][k][:110]}")
     print(f"  Fact recall: {rec['facts_hit']} correctly stated   ({100*rec['fact_recall']:.0f}%)")
-    _record_cost("recommendation_grading", nebius)
+    _record_cost("evaluation", nebius)
 
     return {"retrieval": ret, "recommendation": rec}
 
