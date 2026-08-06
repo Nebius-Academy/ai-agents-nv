@@ -2,7 +2,7 @@
 
 Everything mechanical lives here so the teaching notebook only shows:
   - Data (GOLD_SOURCES, GOLD_FACTS)
-  - Prompts (EXTRACTION_PROMPT, RECOMMENDATION_PROMPT)
+  - Prompts (RECOMMENDATION_PROMPT)
   - Top-level calls (set_config, run_deep_research, grade_saved_run,
     print_config_comparison)
 
@@ -17,23 +17,22 @@ Typical usage in the notebook:
 
     set_config("baseline", lead=SUPER, worker=NANO, judge=NANO)
     run_dir = run_deep_research(RECOMMENDATION_PROMPT)
-    scores  = grade_saved_run(run_dir, GOLD_SOURCES, GOLD_FACTS, EXTRACTION_PROMPT)
+    scores  = grade_saved_run(run_dir, GOLD_SOURCES, GOLD_FACTS)
     ...
     print_config_comparison()
 
-`grade_saved_run` grades all three stages (retrieval, extraction,
-recommendation) for the current config. Retrieval and recommendation are
-graded from `run_dir`'s saved artifacts; extraction runs fresh with the
-current LEAD_MODEL and JUDGE_MODEL.
+`grade_saved_run` grades retrieval and recommendation from `run_dir`'s
+saved artifacts. Only the judge LLM is called; the agent is not
+re-invoked.
 
-Requires NEBIUS_API_KEY and TAVILY_API_KEY to be in the environment before
-import (the pricing lookup runs at import time).
+Requires NEBIUS_API_KEY in the environment before import (the pricing
+lookup runs at import time). TAVILY_API_KEY is needed only when the
+agent actually runs.
 """
 
 import importlib
 import json
 import os
-import re
 import uuid
 from pathlib import Path
 from typing import Literal
@@ -47,7 +46,6 @@ from tqdm import tqdm
 from deepagents.backends import FilesystemBackend
 from langchain_core.callbacks import UsageMetadataCallbackHandler
 from langchain_nebius import ChatNebius
-from tavily import TavilyClient
 
 
 # =============================================================================
@@ -65,7 +63,7 @@ print(f"Fetched pricing for {len(NEBIUS_PRICING)} Nebius models")
 TAVILY_PRICE_PER_CREDIT = 0.008
 
 
-def total_cost(callback, tavily_searches=0, tavily_extracts=0):
+def total_cost(callback, tavily_searches=0):
     """Return (nebius_cost, tavily_cost) in USD from a UsageMetadataCallbackHandler."""
     nebius = 0.0
     for model_id, um in callback.usage_metadata.items():
@@ -75,7 +73,7 @@ def total_cost(callback, tavily_searches=0, tavily_extracts=0):
             continue
         nebius += um["input_tokens"]  * float(p["prompt"])
         nebius += um["output_tokens"] * float(p["completion"])
-    tavily = (tavily_searches + tavily_extracts) * TAVILY_PRICE_PER_CREDIT
+    tavily = tavily_searches * TAVILY_PRICE_PER_CREDIT
     return nebius, tavily
 
 
@@ -293,115 +291,6 @@ Answer two questions about the report below.
 
 
 # =============================================================================
-# Extraction (isolated LLM capability test)
-# =============================================================================
-def _slug(url):
-    return url.split("//")[-1].replace("/", "_").replace("?", "_").replace("&", "_")[:150]
-
-
-def _parse_facts(text):
-    """Strip common wrappers and extract a JSON array of strings from LLM output."""
-    t = text.strip()
-    t = re.sub(r"^\s*```(?:json)?\s*", "", t)
-    t = re.sub(r"\s*```\s*$", "", t)
-    try:
-        v = json.loads(t)
-        return v if isinstance(v, list) else None
-    except json.JSONDecodeError:
-        pass
-    m = re.search(r"\[.*\]", t, re.S)
-    if m:
-        try:
-            v = json.loads(m.group(0))
-            return v if isinstance(v, list) else None
-        except json.JSONDecodeError:
-            return None
-    return None
-
-
-class _FactJudgment(BaseModel):
-    contains: bool
-    why: str = Field(default="")
-
-
-def run_extraction_eval(gold_facts, extraction_prompt):
-    """Extract facts from each source URL under LEAD_MODEL, grade each gold
-    fact with JUDGE_MODEL. Prints per-URL and per-dimension results.
-    Stashes cost under STAGE_COST[(CURRENT_CONFIG, "extraction")]."""
-    assert CURRENT_CONFIG, "call set_config(...) first"
-    extracted_pages_dir = Path("extracted_pages")
-    extracted_pages_dir.mkdir(exist_ok=True)
-
-    cb = UsageMetadataCallbackHandler()
-    tavily = TavilyClient(api_key=os.environ["TAVILY_API_KEY"])
-    llm = ChatNebius(model=os.environ["LEAD_MODEL"], temperature=0.0, timeout=180)
-
-    unique_urls = sorted({f["source"] for f in gold_facts})
-    extracted_by_url = {}
-    for url in unique_urls:
-        slug = _slug(url)
-        r = tavily.extract([url])
-        text = ((r.get("results") or [{}])[0].get("raw_content") or "")[:80_000]
-        (extracted_pages_dir / f"{slug}.txt").write_text(text)
-        if not text:
-            extracted_by_url[url] = []
-            print(f"  {url[:70]:70s}  -> no content from Tavily")
-            continue
-        resp = llm.invoke(extraction_prompt.format(url=url, text=text),
-                          config={"callbacks": [cb]})
-        (extracted_pages_dir / f"{slug}.raw.txt").write_text(resp.content)
-        facts = _parse_facts(resp.content)
-        if facts is None:
-            (extracted_pages_dir / f"{slug}.error.txt").write_text(
-                f"failed to parse JSON array from response ({len(resp.content)} chars)"
-            )
-            extracted_by_url[url] = []
-            print(f"  {url[:70]:70s}  -> PARSE FAILED")
-        else:
-            extracted_by_url[url] = facts
-            (extracted_pages_dir / f"{slug}.facts.json").write_text(json.dumps(facts, indent=2))
-            print(f"  {url[:70]:70s}  -> {len(facts)} facts")
-
-    judge = ChatNebius(model=os.environ["JUDGE_MODEL"], temperature=0.0, timeout=180)
-    judge_struct = judge.with_structured_output(_FactJudgment)
-
-    per_fact = []
-    for gf in tqdm(gold_facts, desc="grading facts"):
-        candidates = extracted_by_url.get(gf["source"], [])
-        candidates_str = ("\n".join(f"  [{i}] {c}" for i, c in enumerate(candidates))
-                          if candidates else "(no extracted claims for this source)")
-        prompt = f"""Reference fact ({gf['competitor']}, {gf['dimension']}): {gf['claim']}
-
-Extracted claims for this source:
-{candidates_str}
-
-Does any extracted claim substantively agree with the reference? Same
-underlying fact, same numbers if numbers are involved, same names if names
-are involved. Rewordings PASS; missing material numbers or entities FAIL."""
-        j = judge_struct.invoke(prompt, config={"callbacks": [cb]})
-        if j is None:
-            per_fact.append({**gf, "contains": False, "why": "judge returned no structured output"})
-        else:
-            per_fact.append({**gf, "contains": j.contains, "why": j.why})
-
-    hits = sum(pf["contains"] for pf in per_fact)
-    total = len(per_fact)
-    nebius_cost, tavily_cost = total_cost(cb, tavily_extracts=len(unique_urls))
-
-    by_dim = {}
-    for pf in per_fact:
-        by_dim.setdefault(pf["dimension"], []).append(pf["contains"])
-
-    print(f"\nfact_recall: {hits}/{total}   ({100*hits/total:.0f}%)")
-    print("per-dimension:")
-    for dim, xs in sorted(by_dim.items()):
-        print(f"  {dim:25s}  {sum(xs):>2}/{len(xs):<2}   ({100*sum(xs)/len(xs):.0f}%)")
-
-    _record_cost("extraction", nebius_cost + tavily_cost)
-    return per_fact
-
-
-# =============================================================================
 # Multi-config runner
 # =============================================================================
 # Model-name constants (GEMMA, NANO, SUPER) live in the notebook, not here --
@@ -443,14 +332,10 @@ def run_deep_research(prompt):
     return run_dir
 
 
-def grade_saved_run(run_dir, gold_sources, gold_facts, extraction_prompt):
-    """Grade retrieval, extraction, and recommendation for the current config.
-
-    - Retrieval + recommendation are graded from `run_dir`'s saved artifacts.
-    - Extraction is run fresh (it doesn't use the deep-research run at all --
-      it tests LEAD_MODEL + JUDGE_MODEL directly on the gold source pages).
-    - All three costs stash into STAGE_COST[(CURRENT_CONFIG, ...)].
-    """
+def grade_saved_run(run_dir, gold_sources, gold_facts):
+    """Grade retrieval and recommendation for the current config, from the
+    saved artifacts of a single deep-research run. Only the judge LLM is
+    called here; the agent is not re-invoked."""
     assert CURRENT_CONFIG, "call set_config(...) first"
 
     ret = grade_retrieval(run_dir, gold_sources)
@@ -471,11 +356,7 @@ def grade_saved_run(run_dir, gold_sources, gold_facts, extraction_prompt):
     print(f"  Fact recall: {rec['facts_hit']} correctly stated   ({100*rec['fact_recall']:.0f}%)")
     _record_cost("recommendation_grading", nebius)
 
-    print(f"\n--- Extraction ---")
-    ext = run_extraction_eval(gold_facts, extraction_prompt)
-    # run_extraction_eval records its own cost under STAGE_COST[(CURRENT_CONFIG, "extraction")].
-
-    return {"retrieval": ret, "recommendation": rec, "extraction": ext}
+    return {"retrieval": ret, "recommendation": rec}
 
 
 def print_config_comparison():
