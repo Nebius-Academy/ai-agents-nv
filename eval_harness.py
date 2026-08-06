@@ -313,8 +313,7 @@ def set_config(name, lead, worker, judge):
 
 def _record_cost(stage, cost):
     STAGE_COST[(CURRENT_CONFIG, stage)] = cost
-    total = sum(v for v in STAGE_COST.values())
-    print(f"  spent this stage: ${cost:.4f}   |   running total: ${total:.4f}")
+    print(f"  {stage}: ${cost:.4f}")
 
 
 def run_deep_research(prompt):
