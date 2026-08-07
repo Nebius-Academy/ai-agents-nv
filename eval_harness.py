@@ -227,14 +227,16 @@ Answer each rubric item YES or NO. YES only if clearly yes; ambiguous or
 partial cases are NO.
 
 Rubric:
-- top_3_given: does the report give a specific top-3 recommendation the
-  reader can identify?
-- evidence_corresponds_to_retrieved: for every factual claim in the report,
-  does supporting evidence appear in the retrieved findings? NO if the
-  synthesis stage hallucinated content the pipeline never retrieved.
-- recommendation_grounded: does every top-3 pick appear in the retrieved
-  findings? YES if all three are present in the findings; NO if any pick
-  is absent from the findings.
+- top_3_given: does the report identify 3 specific tool/products by name as its top picks? 
+  YES only if the report names three actual competitor products.
+  NO if the report identifies <= 2 or >= 4 products as its top picks or never settles on a choice.
+- evidence_corresponds_to_retrieved: for every factual claim in the
+  report, does supporting evidence appear in the retrieved findings? NO
+  if the synthesis stage hallucinated content the pipeline never
+  retrieved.
+- recommendation_grounded: does every top-3 tool/product pick appear in the
+  retrieved findings? YES if all three named competitor tools are present
+  in the findings; NO if any is absent OR if top_3_given is NO.
 
 --- RETRIEVED FINDINGS ---
 {findings}
