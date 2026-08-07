@@ -232,8 +232,9 @@ Rubric:
 - evidence_corresponds_to_retrieved: for every factual claim in the report,
   does supporting evidence appear in the retrieved findings? NO if the
   synthesis stage hallucinated content the pipeline never retrieved.
-- recommendation_grounded: does the top-3 follow from the facts the report
-  itself presents?
+- recommendation_grounded: does every top-3 pick appear in the retrieved
+  findings? YES if all three are present in the findings; NO if any pick
+  is absent from the findings.
 
 --- RETRIEVED FINDINGS ---
 {findings}
