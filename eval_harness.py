@@ -245,16 +245,20 @@ Rubric:
         rubric_prompt, config={"callbacks": [cb]}
     )
 
-    rubric_scores = {
-        "top_3_given":                        rubric.top_3_given_answer == "yes",
-        "evidence_corresponds_to_retrieved":  rubric.evidence_corresponds_to_retrieved_answer == "yes",
-        "recommendation_grounded":            rubric.recommendation_grounded_answer == "yes",
-    }
-    rubric_reasons = {
-        "top_3_given":                        rubric.top_3_given_why,
-        "evidence_corresponds_to_retrieved":  rubric.evidence_corresponds_to_retrieved_why,
-        "recommendation_grounded":            rubric.recommendation_grounded_why,
-    }
+    if rubric is None:
+        rubric_scores  = {k: False for k in ("top_3_given", "evidence_corresponds_to_retrieved", "recommendation_grounded")}
+        rubric_reasons = {k: "judge returned no structured output" for k in rubric_scores}
+    else:
+        rubric_scores = {
+            "top_3_given":                        rubric.top_3_given_answer == "yes",
+            "evidence_corresponds_to_retrieved":  rubric.evidence_corresponds_to_retrieved_answer == "yes",
+            "recommendation_grounded":            rubric.recommendation_grounded_answer == "yes",
+        }
+        rubric_reasons = {
+            "top_3_given":                        rubric.top_3_given_why,
+            "evidence_corresponds_to_retrieved":  rubric.evidence_corresponds_to_retrieved_why,
+            "recommendation_grounded":            rubric.recommendation_grounded_why,
+        }
 
     struct = judge.with_structured_output(FactContainment)
     per_fact = []
