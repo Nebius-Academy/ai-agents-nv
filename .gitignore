@@ -1,3 +1,4 @@
+*.screenstudio
 .pi*/
 *.pptx
 # Virtual environment
