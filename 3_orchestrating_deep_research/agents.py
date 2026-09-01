@@ -51,7 +51,7 @@ competitor_researcher_subagent = {
     "model": WORKER_MODEL,
 }
 
-# No model/tools keys: inherits LEAD_MODEL and audits only what was gathered.
+# No tools key: audits only what was already gathered into findings/.
 fact_checker_subagent = {
     "name": "fact-checker",
     "description": (
@@ -61,6 +61,7 @@ fact_checker_subagent = {
         "and funding figures -- is sourced, dated, and not overstated."
     ),
     "system_prompt": FACT_CHECKER_PROMPT,
+    "model": WORKER_MODEL,
 }
 
 
