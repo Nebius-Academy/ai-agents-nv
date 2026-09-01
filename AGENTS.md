@@ -1,4 +1,4 @@
-We are making a course about how to create agents in Python and specifically in this course we are going to show competitors research agents this agent should be based on library in deep agents. We will use Tavily for web search and Nebius Token Factory for LLM APIs
+We are making a course about how to create agents in Python. Lesson code lives under numbered folders, one per lesson — e.g. `3_orchestrating_deep_research/` holds the competitor research agent, built on the `deepagents` library, using Tavily for web search and Nebius Token Factory for LLM APIs.
 
 ## Local environment
 
@@ -8,13 +8,13 @@ Setup (already done, only needed on a fresh clone):
 
 ```bash
 python3.13 -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m pip install -r 3_orchestrating_deep_research/requirements.txt
 ```
 
 Running commands — always go through the venv, e.g.:
 
 ```bash
-.venv/bin/python main.py
+.venv/bin/python 3_orchestrating_deep_research/main.py
 .venv/bin/python -m pip install <package>
 ```
 
