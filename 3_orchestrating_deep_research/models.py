@@ -8,8 +8,8 @@ from langchain_nebius import ChatNebius
 
 load_dotenv()
 
-LEAD_MODEL_NAME = os.environ.get("LEAD_MODEL", "MiniMaxAI/MiniMax-M2.5")
-WORKER_MODEL_NAME = os.environ.get("WORKER_MODEL", "MiniMaxAI/MiniMax-M2.5")
+LEAD_MODEL_NAME = os.environ.get("LEAD_MODEL", "nvidia/Nemotron-3-Ultra-550b-a55b")
+WORKER_MODEL_NAME = os.environ.get("WORKER_MODEL", "nvidia/nemotron-3-super-120b-a12b")
 
 LEAD_MODEL = ChatNebius(
     model=LEAD_MODEL_NAME,
